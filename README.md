@@ -18,7 +18,7 @@ A family of binary adders - chips designed to add numbers, and a simple Arithmet
 
 ### Project 3: Sequential Logic and Memory
 
-A hierarcy of memory chips, from elementary flip-flop gates, to one-bit registers, to n-bit registers, to a family of Random Access Memory (RAM) chips. Unlike processing chips, based on combinational logic, these chips require clock-based sequential logic.
+A hierarcy of memory chips, from elementary flip-flop gates, to one-bit registers, to n-bit registers, to a family of Random Access Memory (RAM) chips. Unlike processing chips, based on combinational logic, these require clock-based sequential logic.
 
 ### Project 4: Machine Language
 
