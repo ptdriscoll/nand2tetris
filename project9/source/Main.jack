@@ -1,0 +1,9 @@
+/** Initializes a new Ping Pong game and starts running it. */
+class Main {
+    function void main() {
+        var Game game;
+        let game = Game.new();
+        do game.dispose();
+        return;
+    }
+}

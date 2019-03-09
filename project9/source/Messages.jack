@@ -1,0 +1,140 @@
+/**
+ * Prints welcome message, scores and game over message.
+ */
+ 
+class Messages {
+
+    /*
+    * Each class must include at least one field to avoid runtime bug.
+    * http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/OS-Memory-vm-bug-td2253534.html
+    */
+    field int dummyVar; 
+
+    /** Constructs new game messages. */
+    constructor Messages new() {
+        return this;
+    }
+
+    /** Disposes this messages instance. */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+    
+    /**  
+    * Print a string constant and frees its memory.
+    * Use instead of Output.printString("Whatever") to prevent memory leaks.
+    * From Mark Armbrust: 
+    * https://www.coursera.org/learn/nand2tetris2/discussions/weeks/3/threads/cw5bvParEeaIjwovgVtlYg
+    */
+    method void printStringConst(String str) {
+        do Output.printString(str);
+        do str.dispose();
+        return;
+    }     
+    
+    /** 
+    * Prints welcome message. 
+    * For Output.moveCursor, the y coordinate comes first, and then the x coordinate
+    * Each character is 11 pixels deep and 8 pixels wide.
+    * The screen is 64 characters wide and 23 characters deep. 
+    */
+    method void welcome() {    
+        do Output.moveCursor(6, 22); 
+        do printStringConst("Welcome to Hack Pong");
+        do Output.moveCursor(9, 6);
+        do printStringConst("Use paddle on right. Press up and down arrows to");
+        do Output.moveCursor(10, 6);
+        do printStringConst("move your paddle. Score 3 points to beat computer.");
+        do Output.moveCursor(12, 6);
+        do printStringConst("Start the game by selecting level of play: ");
+        do Output.moveCursor(14, 10);
+        do printStringConst("- Press 1 for hard");
+        do Output.moveCursor(15, 10);
+        do printStringConst("- Press 2 for medium");
+        do Output.moveCursor(16, 10);
+        do printStringConst("- Press 3 for easy");
+        return;         
+    }
+    
+    /** Prints scores to screen */
+    method void score(int scoreComputer, int scorePlayer) {
+        do Output.moveCursor(1, 23);
+        do Output.printInt(scoreComputer);
+        
+        do Output.moveCursor(1, 40);
+        do Output.printInt(scorePlayer);
+        
+        return;
+    }
+
+    /** 
+    * Prints game over message. 
+    * Accepts 1 if computer won and 0 if player won. 
+    * For Output.moveCursor, the y coordinate comes first, and then the x coordinate
+    * Each character is 11 pixels deep and 8 pixels wide.
+    * The screen is 64 characters wide and 23 characters deep. 
+    */
+    method void gameOver(int winner) {       
+        
+        if (winner = 1) { 
+            do Output.moveCursor(6, 24); 
+            do printStringConst("The computer won");
+        }
+        
+        else {
+            do Output.moveCursor(6, 28); 
+            do printStringConst("You won!");
+        }       
+        
+        do Output.moveCursor(9, 14);
+        do printStringConst("To play again, select level of play:");
+        do Output.moveCursor(11, 18);
+        do printStringConst("- Press 1 for hard");
+        do Output.moveCursor(12, 18);
+        do printStringConst("- Press 2 for medium");
+        do Output.moveCursor(13, 18);
+        do printStringConst("- Press 3 for easy");
+        return;         
+    }
+
+    /** 
+    * Creates welcome or game over message box. 
+    * Accepts 0 for start of game, and 1 for reset to play again. 
+    */
+    method void box(int startOrReset, int winner) {   
+        var int leftX;
+        var int rightX;
+        var int topY;
+        var int bottomY;
+        var char key;
+        var int playLevel;
+        
+        if (startOrReset = 0) {            
+            let leftX = 33;
+            let rightX = 479;
+            let topY = 43;
+            let bottomY = 211;
+        }
+        
+        else {            
+            let leftX = 97;
+            let rightX = 415;
+            let topY = 43;
+            let bottomY = 178;            
+        }        
+        
+        do Screen.setColor(false);
+        do Screen.drawRectangle(leftX, topY, rightX, bottomY);
+        do Screen.setColor(true);
+        do Screen.drawLine(leftX, topY, rightX, topY); // top
+        do Screen.drawLine(leftX, bottomY, rightX, bottomY); // bottom
+        do Screen.drawLine(leftX, topY, leftX, bottomY); // left
+        do Screen.drawLine(rightX, topY, rightX, bottomY); // right
+        
+        if (startOrReset = 0) { do welcome(); } 
+        else { do gameOver(winner); }
+        
+        return;
+    }    
+}

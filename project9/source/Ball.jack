@@ -1,0 +1,143 @@
+/**
+ * Creates and controls ping pong ball.
+ */
+ 
+class Ball {
+    field int radius; // ball's radius
+    field int posX, posY; // balls's position in pixels 
+    field int velX, velY; // ball's velocity in x and y dimensions
+    field int playerReturns; // tracks how many times player returned ball;
+
+    /** Constructs new Ping Pong ball near center of screen. */
+    constructor Ball new() {
+        let radius = 5;
+        let velX = -3;
+        let velY = 2;       
+        do serve(501, 127);
+        return this;
+    }
+
+    /** Disposes this ball. */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+    
+    /** Sets the ball to serve position */
+    method void serve(int setPosX, int setPosY) {
+        let posX = setPosX;
+        let posY = setPosY;  
+        if (velY > 0) { let velY = 2; } 
+        else { let velY = -2; }         
+        let playerReturns = 0;        
+        return;
+    }    
+   
+    /** Draws the ball */
+    method void draw() {
+        do Screen.drawCircle(posX, posY, radius);
+        return;
+    }
+    
+    /** Shows the ball. */
+    method void show() {
+        do Screen.setColor(true);
+        do draw();    
+        return;
+    } 
+
+    /** Hides the ball. */
+    method void hide() {
+        do Screen.setColor(false);
+        do draw();
+        return;        
+    }
+  
+    /** Moves the ball */
+    method boolean move(int paddleLeftTop, int paddleLeftBottom, 
+                        int paddleRightTop, int paddleRightBottom) {
+                       
+        do hide();
+        
+        /* Bounce the ball off left side */
+        if (posX < 10) {
+            if ((posY > paddleLeftTop) & (posY < paddleLeftBottom)) {
+                let velX = velX * -1;              
+            }
+            else {
+                return false;
+            }
+        }
+        
+        /* Bounce the ball off right side */
+        if (posX > 501) {      
+            if ((posY > paddleRightTop) & (posY < paddleRightBottom)) {                
+                let velX = velX * -1; 
+                let playerReturns = playerReturns + 1;   
+
+                // reset Y angle
+                if (velY < 0) { let velY = -2; }
+                if (velY > 0) { let velY = 2; }                
+                if (posY < (paddleRightTop + 10)) { let velY = -3; } 
+                if (posY > (paddleRightBottom - 10)) { let velY = 3; } 
+                if (posY < (paddleRightTop + 5)) { let velY = -4; } 
+                if (posY > (paddleRightBottom - 5)) { let velY = 4; }              
+            }       
+            else {                
+                return false;
+            }
+        }        
+        
+        /* Bounce the ball off top and bottom */
+        if ((posY > (249 - velY)) | (posY < (5 - velY))) {
+            let velY = velY * -1; 
+        }          
+        
+        let posX = posX + velX;
+        let posY = posY + velY;  
+        
+        do show();
+        return true;
+    }
+    
+    /** Gets ball's X or horizontal position. */
+    method int getPosX() {
+        return posX;
+    }    
+    
+    /** Gets ball's Y or vertical position. */
+    method int getPosY() {
+        return posY;
+    }
+
+    /** Gets how many times player returned ball. */
+    method int getPlayerReturns() {
+        return playerReturns;        
+    } 
+
+    /** Gets the ball's direction: 0 is left and 1 is right. */
+    method int getBallDirection() {
+        var int direction;
+        if (velX < 0) { let direction = 0; }
+        else { let direction = 1; }
+        return direction;        
+    }
+} 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

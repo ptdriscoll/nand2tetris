@@ -1,0 +1,40 @@
+/**
+ * Creates ping pong table.
+ */
+ 
+class Table {
+    field Ball ball;
+
+    /** Constructs new game table. */
+    constructor Table new() { 
+        return this;
+    }
+
+    /** Disposes this game table. */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+    
+    /** Draws the table. */
+    method void draw() {
+        do Screen.drawLine(4, 0, 4, 255);
+        do Screen.drawLine(255, 0, 255, 255);
+        do Screen.drawLine(506, 0, 506, 255);
+        return;
+    }    
+    
+    /** Shows table. */
+    method void show() {
+        do Screen.setColor(true);
+        do draw();    
+        return;
+    } 
+
+    /** Hides table. */
+    method void hide() {
+        do Screen.setColor(false);
+        do draw();
+        return;        
+    }
+}    

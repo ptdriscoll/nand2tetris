@@ -1,0 +1,60 @@
+function Table.new 0
+push constant 1
+call Memory.alloc 1
+pop pointer 0
+push pointer 0
+return
+function Table.dispose 0
+push argument 0
+pop pointer 0
+push pointer 0
+call Memory.deAlloc 1
+pop temp 0
+push constant 0
+return
+function Table.draw 0
+push argument 0
+pop pointer 0
+push constant 4
+push constant 0
+push constant 4
+push constant 255
+call Screen.drawLine 4
+pop temp 0
+push constant 255
+push constant 0
+push constant 255
+push constant 255
+call Screen.drawLine 4
+pop temp 0
+push constant 506
+push constant 0
+push constant 506
+push constant 255
+call Screen.drawLine 4
+pop temp 0
+push constant 0
+return
+function Table.show 0
+push argument 0
+pop pointer 0
+push constant 0
+not
+call Screen.setColor 1
+pop temp 0
+push pointer 0
+call Table.draw 1
+pop temp 0
+push constant 0
+return
+function Table.hide 0
+push argument 0
+pop pointer 0
+push constant 0
+call Screen.setColor 1
+pop temp 0
+push pointer 0
+call Table.draw 1
+pop temp 0
+push constant 0
+return

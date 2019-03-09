@@ -1,0 +1,162 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Math.jack
+
+/**
+ * A library of commonly used mathematical functions.
+ * Note: Jack compilers implement multiplication and division using OS method calls.
+ */
+class Math {
+    static Array twoToThe; //for bit function
+    static int totalY; //for use in divide
+
+    /** Initializes the library. */
+    function void init() {
+        var int idx, num;    
+    
+        let twoToThe = Array.new(16);
+        let idx = 0;
+        let num = 1;
+        
+        while (idx < 16) {
+            let twoToThe[idx] = num;
+            let idx = idx + 1;
+            let num = num + num;        
+        }
+        
+        return;    
+    }
+    
+    /** Returns true if the i-th bit of x is 1, false otherwise. */
+    function boolean bit(int x, int i) {   
+        return (x & twoToThe[i]) = twoToThe[i];
+    }    
+
+    /** Returns the absolute value of x. */
+    function int abs(int x) {
+        if (x > 0) {
+            return x;
+        }
+        return -x;
+    }
+
+    /** Returns the product of x and y. 
+     *  When a Jack compiler detects the multiplication operator '*' in the 
+     *  program's code, it handles it by invoking this method. In other words,
+     *  the Jack expressions x*y and multiply(x,y) return the same value.
+     */
+    function int multiply(int x, int y) {
+        var int idx, sum, shiftedX, z;
+        let idx = 0;
+        let sum = 0;
+        
+        if (x > y) {
+            let shiftedX = x;
+            let z = y;
+        }
+        else {
+            let shiftedX = y;
+            let z = x;
+        }       
+        
+        while (idx < 16) { //16 bits
+            if (Math.bit(z, idx)) {
+                let sum = sum + shiftedX;
+            }
+            let shiftedX = shiftedX + shiftedX;
+            let idx = idx + 1;  
+        }
+        
+        return sum;   
+    }
+
+    /** Returns the integer part of x/y.
+     *  When a Jack compiler detects the multiplication operator '/' in the 
+     *  program's code, it handles it by invoking this method. In other words,
+     *  the Jack expressions x/y and divide(x,y) return the same value.
+     */
+    function int divide(int x, int y) {
+        var int q, result;
+        var boolean pos;
+        
+        let pos = ((x < 0) = (y < 0 ));
+        let x = Math.abs(x);
+        let y = Math.abs(y);
+        
+        if ((y > x) | (y < 0)) {
+            return 0;
+        }
+        
+        let q = Math.divide(x, y + y);
+        
+        if (q = 0) {
+            let totalY = 0;
+        }
+        
+        if (q = 1) {
+            let totalY = y + y;
+        }      
+        
+        if ((x - totalY) < y) {
+            let result = q + q;
+        } 
+        else {
+            let totalY = totalY + y;
+            let result = q + q + 1;
+        }
+        
+        if (pos) {
+            return result;
+        }
+        
+        return -result;        
+    }
+
+    /** Returns the integer part of the square root of x. Adapted from:
+    http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/A-more-efficient-square-root-algorithm-td4028140.html
+    */
+    function int sqrt(int x) {
+        var int remainder, iter, square, subtrahend;
+        
+        let square = 0;
+        let remainder = 0;
+        let iter = 0;
+        
+        while (iter < 8) {
+            let remainder = remainder + remainder - (x < 0);
+            let x = x + x;
+            
+            let remainder = remainder + remainder - (x < 0);
+            let x = x + x;            
+            
+            let square = square + square;
+            let subtrahend = square + square + 1;
+            
+            if (~(subtrahend > remainder)) {
+                let remainder = remainder - subtrahend;
+                let square = square + 1;
+            }
+            
+            let iter = iter + 1;       
+        }
+        
+        return square;
+    }
+
+    /** Returns the greater number. */
+    function int max(int a, int b) {
+        if (a > b) {
+            return a;
+        }
+        return b;        
+    }
+
+    /** Returns the smaller number. */
+    function int min(int a, int b) {
+        if (a < b) {
+            return a;
+        }
+        return b;     
+    }
+}

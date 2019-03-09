@@ -1,0 +1,79 @@
+/**
+ * Creates and controls paddles.
+ */
+ 
+class Paddle {
+    field int posTopLeftX, posTopLeftY; // paddle's top left corner in pixels 
+    field int posBottomRightX, posBottomRightY; // paddle's bottom right position in pixels 
+    field int velocity; // paddles's velocity
+    field int direction; // paddle's direction, 1 for down and -1 for up
+
+    /** Constructs new Paddle, passing in 0 for left paddle and 1 for right paddle. */
+    constructor Paddle new(int isRightPaddle) {
+        let posTopLeftX = 0 + (506 * isRightPaddle); 
+        let posTopLeftY = 107;
+        let posBottomRightX = 4 + (506 * isRightPaddle); 
+        let posBottomRightY = 147;
+        let velocity = 2;       
+        let direction = 1;
+        return this;
+    }
+
+    /** Disposes this paddle. */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }   
+   
+    /** Draws the paddle */
+    method void draw() {
+        do Screen.drawRectangle(posTopLeftX, posTopLeftY, posBottomRightX, posBottomRightY);
+        return;
+    }
+    
+    /** Shows the paddle. */
+    method void show() {
+        do Screen.setColor(true);
+        do draw();    
+        return;
+    } 
+
+    /** Hides the paddle. */
+    method void hide() {
+        do Screen.setColor(false);
+        do draw();
+        return;        
+    }    
+  
+    /** Moves the paddle up. */
+    method void moveUp() {
+        if (posTopLeftY > 2) {
+            do hide();
+            let posTopLeftY = posTopLeftY - 3;
+            let posBottomRightY = posBottomRightY - 3;
+            do show();        
+        }
+        return;
+    }  
+
+    /** Moves the paddle down. */
+    method void moveDown() {
+        if (posBottomRightY < 253) {
+            do hide();
+            let posTopLeftY = posTopLeftY + 3;
+            let posBottomRightY = posBottomRightY + 3;
+            do show();        
+        }
+        return;
+    }
+    
+    /** Gets paddle's top Y coordinate. */
+    method int getTop() {
+        return posTopLeftY;
+    }  
+
+    /** Gets paddle's bottom Y coordinate. */
+    method int getBottom() {
+        return posBottomRightY;
+    }     
+} 

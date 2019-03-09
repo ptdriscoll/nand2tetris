@@ -1,0 +1,187 @@
+/**
+ * Starts and plays Hack Pong game.
+ * The computer plays the left paddle and the player uses the right paddle.
+ * The player starts game by pressing level of play: 1 for hard, 2 for intermediate, and 3 for easy.
+ * First one to score 3 points wins.
+ */
+ 
+class Game {
+    field Messages messages;
+    field Table table;
+    field Ball ball;
+    field Paddle paddleLeft;
+    field Paddle paddleRight;
+    field boolean play;
+    field int scoreComputer;
+    field int scorePlayer;
+    field int winner; // 0 for player and 1 for computer
+
+    /** Constructs new game and adds table, ball and paddles. */
+    constructor Game new() { 
+        let messages = Messages.new();
+        let table = Table.new();
+        let ball = Ball.new(); 
+        let paddleLeft = Paddle.new(0);               
+        let paddleRight = Paddle.new(1);
+        let scoreComputer = 0; 
+        let scorePlayer = 0;
+        let winner = -1;
+        let play = false;
+        do start(0); // pass 0 for first game
+        return this;
+    }
+
+    /** Disposes this game table. */
+    method void dispose() {
+        do messages.dispose();
+        do table.dispose();
+        do ball.dispose();
+        do paddleLeft.dispose();
+        do paddleRight.dispose();
+        do Memory.deAlloc(this);
+        return;
+    }
+    
+    /** Sets and resets game board screen */
+    method void setGameScreen() {
+        do Screen.clearScreen();
+        do Screen.setColor(true);
+        do table.show();
+        do paddleLeft.show();         
+        do paddleRight.show();  
+        do messages.score(scoreComputer, scorePlayer);        
+        return;        
+    }
+    
+    /** 
+    * Creates welcome or game over screen. 
+    * Accepts 0 for start of game, and 1 for reset to play again. 
+    */
+    method void start(int startOrReset) {  
+        var char key;
+        var int playLevel;
+        
+        do setGameScreen();
+        
+        /* 
+         * Reset scores if this is a replay. 
+         * Must be after setGameScreen() and before messages.box(),
+         * so player can see score. Next setGameScreen() will set scores to 0 0.  
+         */
+        if (startOrReset = 1) {            
+            let scoreComputer = 0; 
+            let scorePlayer = 0; 
+        }        
+        
+        do messages.box(startOrReset, winner);
+        
+        while (~play) {            
+            let key = Keyboard.keyPressed();
+          
+            if (key = 49) { 
+                let playLevel = 8;                               
+                let play = true; 
+            } 
+            if (key = 50) { 
+                let playLevel = 16; 
+                let play = true; 
+            } 
+            if (key = 51) { 
+                let playLevel = 24; 
+                let play = true; 
+            }             
+        }
+        
+        do setGameScreen();
+        do run(playLevel);        
+        return;
+    }
+    
+    /** Starts and runs pong game. */
+    method void run(int playLevel) {
+        var char key;
+        var int ballPosX;
+        var int ballPosY;
+        var int paddleLeftTop;
+        var int paddleLeftBottom;
+        var int paddleRightTop;
+        var int paddleRightBottom;        
+        var int playerReturns;
+        var boolean ballInPlay;
+        var int ballDirection; // returns 0 for left and 1 for right
+        var int whenComputerResponds; // over time, wait until ball gets closer  
+                                      // to make it harder for computer
+                                      
+                
+        while (play) {
+        
+            /* 
+             * move right paddle based on up and down arrow keys 
+             */           
+            
+            let key = Keyboard.keyPressed();            
+            if (key = 131) { do paddleRight.moveUp(); } // up arrow           
+            if (key = 133) { do paddleRight.moveDown(); } // down arrow
+            
+            
+            /* 
+             * track ball movements and move left paddle for computer 
+             */
+            
+            let ballPosX = ball.getPosX();
+            let ballPosY = ball.getPosY();
+            let paddleLeftTop = paddleLeft.getTop();
+            let paddleLeftBottom = paddleLeft.getBottom();
+            let playerReturns = ball.getPlayerReturns();
+            
+            if (playerReturns < 4) { 
+                let whenComputerResponds = 256 - (playerReturns * 53); 
+            }        
+            
+            if (ballPosX < whenComputerResponds) { 
+                if (ballPosY < (paddleLeftTop + 20)) { do paddleLeft.moveUp(); }
+                if (ballPosY > (paddleLeftBottom - 20)) { do paddleLeft.moveDown(); } 
+            }  
+            
+            
+            /*
+             * check to see if ball is still in play and continue 
+             */   
+             
+            let paddleRightTop = paddleRight.getTop();
+            let paddleRightBottom = paddleRight.getBottom();            
+            let ballInPlay = ball.move(paddleLeftTop, paddleLeftBottom, 
+                                          paddleRightTop, paddleRightBottom);
+                                        
+            if (~ballInPlay) { 
+                let ballDirection = ball.getBallDirection(); // returns 0 for left and 1 for right
+                if (ballDirection = 1) {                
+                    let scoreComputer = scoreComputer + 1;
+                    do ball.serve(10, paddleLeftTop + 20);
+                    if (scoreComputer = 3) {                        
+                        let winner = 1;
+                        let play = false;
+                        do start(1); // pass 1 for another game
+                    }
+                }
+                
+                else {                     
+                    let scorePlayer = scorePlayer + 1;
+                    do ball.serve(496, paddleRightTop + 20);
+                    if (scorePlayer = 3) {
+                        let winner = 0;
+                        let play = false;
+                        do start(1); // pass 1 for another game
+                    }               
+                }                
+            }
+            
+            do table.show();
+            do paddleLeft.show();          
+            do paddleRight.show(); 
+            do messages.score(scoreComputer, scorePlayer);
+            do Sys.wait(playLevel);           
+        }
+        return;
+    }
+}

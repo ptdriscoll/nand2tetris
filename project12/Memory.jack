@@ -1,0 +1,110 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Memory.jack
+
+/**
+ * This library provides two services: direct access to the computer's main
+ * memory (RAM), and allocation and recycling of memory blocks. The Hack RAM
+ * consists of 32,768 words, each holding a 16-bit binary number.
+ */ 
+class Memory {
+    static Array ram, freeList;
+    static int next, size;
+
+    /** Initializes the class. */
+    function void init() {
+        var Array heap;
+         
+        let ram = 0;
+        let heap = 2048;
+        let next = 0;
+        let size = 1;
+        let heap[next] = null; // pointer to next available block 
+        let heap[size] = 14334; // size of block, which is rest of heap, 14K-2
+        let freeList = heap; // put heap on freelist as first available block 
+               
+        return;
+    }
+
+    /** Returns the RAM value at the given address. */
+    function int peek(int address) {
+        return ram[address];
+    }
+
+    /** Sets the RAM value at the given address to the given value. */
+    function void poke(int address, int value) {
+        let ram[address] = value;
+        return;
+    }
+
+    /** Finds an available RAM block of the given size and returns
+     *  a reference to its base address. */
+    function int alloc(int objectSize) {        
+        var Array block, newBlock;    
+        
+        let block = freeList;
+        
+        while (block[size] < objectSize) {
+            let block = block[next];            
+            if (block = null) {
+                return -1;
+            }
+        }
+        
+        let block[size] = block[size] - (objectSize + 2);
+        let newBlock = block + block[size] + 2;
+        let newBlock[next] = -1;
+        let newBlock[size] = objectSize;        
+     
+        return newBlock + 2; // return base of data address       
+    }
+
+    /** De-allocates the given object (cast as an array) by making
+     *  it available for future allocations. 
+     *  Inserts block into the free list in ascending block address order. Adapted from:
+     *  http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/New-Heap-Management-algorithm-Coursera-version-td4032026.html
+     */
+    function void deAlloc(Array object) {   
+        var Array prevBlock, block, nextBlock;       
+        
+        let block = object - 2; // get object's header address
+        let prevBlock = freeList;
+        let nextBlock = prevBlock[next];  
+        
+        // find available block addresses before and after block to de-alloc
+        // there might not be one after
+        while (~(nextBlock = null) & (nextBlock < block)) {
+            let prevBlock = nextBlock;
+            let nextBlock = prevBlock[next];            
+        }
+        
+        // de-alloc block 
+        let prevBlock[next] = block;
+        let block[next] = nextBlock;
+
+        do Memory.defrag(prevBlock, block, nextBlock);        
+        return;
+    }
+
+    /** Defragments heap by combining contiguous available blocks after 
+     *  each deAlloc is called. Adapted from: 
+     *  http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/New-Heap-Management-algorithm-Coursera-version-td4032026.html
+     */
+    function void defrag(Array prevBlock, Array block, Array nextBlock) {
+        
+        // combines block with next block if contiguous
+        if ((block + block[size] + 2) = nextBlock) {
+            let block[size] = block[size] + nextBlock[size] + 2;
+            let block[next] = nextBlock[next];
+        }
+        
+        // combines block with previous block if contiguous
+        if ((prevBlock + prevBlock[size] + 2) = block) {
+            let prevBlock[size] = prevBlock[size] + block[size] + 2;
+            let prevBlock[next] = block[next];
+        }
+        
+        return;
+    }   
+}

@@ -1,0 +1,411 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Screen.jack
+
+/**
+ * A library of functions for displaying graphics on the screen.
+ * The Hack physical screen consists of 512 rows (indexed 0..511, top to bottom)
+ * of 256 pixels each (indexed 0..255, left to right). The top left pixel on 
+ * the screen is indexed (0,0).
+ */
+class Screen {
+    static Array screen;
+    static Array bitMask, lineLeftMask, lineRightMask;
+    static boolean color;
+    static int tempSwap;
+
+    /** Initializes the Screen. */
+    function void init() {
+        var int idx, bitNum, lineRightNum;
+        
+        let screen = 16384;
+        let color = true;   
+
+        let bitMask = Array.new(16);
+        let lineLeftMask = Array.new(16);
+        let lineRightMask = Array.new(16);
+        
+        let idx = 0;
+        let bitNum = 1;
+        let lineRightNum = 1;
+        
+        // create bit masks for drawing a pixel, and tails of a horizontal line 
+        while (idx < 16) {            
+            let bitMask[idx] = bitNum;
+            let lineRightMask[idx] = lineRightNum;
+            let lineLeftMask[idx] = -bitNum; 
+           
+            let bitNum = bitNum + bitNum;
+            let lineRightNum = lineRightNum + bitNum; // calculate after bitNum is recalculated            
+            let idx = idx + 1;       
+        }
+        
+        return;
+    }
+
+    /** Erases the entire screen. */
+    function void clearScreen() {
+        var int word;
+        let word = 0;        
+        while (word < 8192) {
+            let screen[word] = false;
+            let word = word + 1;
+        }
+        return;
+    }
+
+    /** Sets the current color, to be used for all subsequent drawXXX commands.
+     *  Black is represented by true, white by false. */
+    function void setColor(boolean b) {
+        let color = b;
+        return;
+    }
+    
+    /** Accepts screen's word address and pixel mask and draws 16-bit word. */
+    function void drawWord(int address, int mask) {
+       
+        if (color) {
+            let screen[address] = screen[address] | mask;
+        }
+        
+        else {
+            let screen[address] = screen[address] & ~mask;
+        }
+        
+        return;        
+    }   
+
+    /** Draws the (x,y) pixel, using the current color. */
+    function void drawPixel(int x, int y) {
+        var int address, mask;
+        
+        let address = (32*y) + (x/16);
+        let mask = bitMask[x&15];
+        
+        do Screen.drawWord(address, mask);
+       
+        return;        
+    }
+
+    /** Draws a vertical line from pixel (x1,y1) to pixel (x2,y2), using the current color. 
+     *  y1 must be less than y2. */
+    function void drawVerticalLine(int x, int y1, int y2) {
+        var int address, mask; 
+        
+        let address = (32*y1) + (x/16);
+        let mask = bitMask[x&15];
+        
+        while (y1 < y2) {
+            do Screen.drawWord(address, mask);
+            let address = address + 32;
+            let y1 = y1 + 1;           
+        }     
+        
+        return;
+    }
+    
+    /** Draws a horizontal line from pixel (x1,y1) to pixel (x2,y2), using the current color. 
+     *  x1 must be less than x2. */
+    function void drawHorizontalLine(int x1, int y, int x2) {
+        var int left, right;
+        var int rows, leftCol, rightCol;
+        var int mask, leftMask, rightMask; 
+        var int stop;      
+        
+        let rows = 32 * y;
+        let leftCol = x1 / 16;
+        let rightCol = x2 / 16;
+        let leftMask = lineLeftMask[x1&15];
+        let rightMask = lineRightMask[x2&15];
+        
+        // draw line if it's all in one word
+        if (leftCol = rightCol) {
+            let mask = lineLeftMask[x1&15] & lineRightMask[x2&15];
+            do Screen.drawWord(rows+leftCol, mask);
+            return;
+        }
+        
+        // draw line if it's in more than one word
+        do Screen.drawWord(rows+leftCol, lineLeftMask[x1&15]);   
+        
+        let stop = rightCol - 1; 
+        while (leftCol < stop) {
+            let leftCol = leftCol + 1;
+            do Screen.drawWord(rows+leftCol, true);
+        }        
+        
+        do Screen.drawWord(rows+rightCol, lineRightMask[x2&15]);   
+       
+        return;
+    }
+
+    /** Draws an angled line from pixel (x1,y1) to pixel (x2,y2), using the current color. 
+     *  Does not rely on drawPixel, in order to avoid multiple multiplication routines. 
+        x1 must be less than x2.  */
+    function void drawAngledLine(int x1, int y1, int x2, int y2) {
+        var int xSum, ySum, diff, oneRow;
+        var int xLen, yLen, xStop, yStop; 
+        var in rows, cols, mask;
+        
+        let xSum = 0;
+        let ySum = 0;
+        let diff = 0;
+        let oneRow = 32;        
+        
+        let xLen = x2 - x1;
+        let yLen = y2 - y1; // is negative if line goes up, 
+                            // but if so, it's made positive below 
+                            // (and still goes up)        
+        
+        let rows = oneRow * y1;
+        let cols = x1 / 16;
+        let mask = bitMask[x1&15];
+        
+        // this moves line up instead of down
+        if (y1 > y2) {
+            let oneRow = -oneRow; // moves each row adjustment up 
+            let yLen = -yLen; // sets y length to a postive
+        }
+        
+        let xStop = xLen + 1;
+        let yStop = yLen + 1;        
+                
+        while ((xSum < xStop) & (ySum < yStop)) {        
+            do Screen.drawWord(rows+cols, mask);
+            
+            // decide whether to go right, or adjust rows to go up or down
+            
+            if (diff < 0) {
+                let xSum = xSum + 1;
+                let diff = diff + yLen;
+                let x1 = x1 + 1;
+                let cols = x1 / 16;
+                let mask = bitMask[x1&15];                
+            }    
+            
+            else {
+                let ySum = ySum + 1;
+                let diff = diff - xLen;
+                let rows = rows + oneRow;
+            }
+        }
+        
+        return;
+    }
+
+    /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. 
+     *  Uses drawVerticalLine, drawHorizontalLine or drawAngleLine. */
+    function void drawLine(int x1, int y1, int x2, int y2) {      
+    
+        if (x1 = x2) {
+            // make sure loweest y comes first
+            if (y1 > y2)  {
+                let tempSwap = y1;
+                let y1 = y2;
+                let y2 = tempSwap;
+            }         
+            do Screen.drawVerticalLine(x1, y1, y2); 
+            return;            
+        }
+        
+        // make sure loweest x comes first
+        if (x1 > x2)  {
+            let tempSwap = x1;
+            let x1 = x2;
+            let x2 = tempSwap;
+            let tempSwap = y1;
+            let y1 = y2;
+            let y2 = tempSwap;
+        }         
+        
+        if (y1 = y2) {
+            do Screen.drawHorizontalLine(x1, y1, x2);
+            return;
+        }
+        
+        do Screen.drawAngledLine(x1, y1, x2, y2);
+        return;
+    }    
+    
+    /** Draws a filled rectangle whose top left corner is (x1, y1)
+     * and bottom right corner is (x2,y2), using the current color. 
+     * Does not rely on drawHorizontalLine, in order to avoid multiple
+     * multiplication and division routines.  
+     */
+    function void drawRectangle(int x1, int y1, int x2, int y2) {
+        var int rows, leftCol, rightCol;
+        var int mask, leftMask, rightMask; 
+        var int leftStop, rightStop;
+       
+        let rows = 32 * y1;
+        let leftCol = x1 / 16;
+        let rightCol = x2 / 16;
+        let leftMask = lineLeftMask[x1&15];
+        let rightMask = lineRightMask[x2&15];        
+        
+        let rightStop = rightCol - 1;
+        while (y1 < y2) {            
+            
+            // draw lines if each is all in one word
+            if (leftCol = rightCol) {
+                let mask = lineLeftMask[x1&15] & lineRightMask[x2&15];
+                do Screen.drawWord(rows+leftCol, mask);
+            }            
+            
+            // draw line if it's in more than one word
+            else {
+                let leftStop = leftCol;
+                do Screen.drawWord(rows+leftCol, lineLeftMask[x1&15]);             
+                while (leftStop < rightStop) {
+                    let leftStop = leftStop + 1;
+                    do Screen.drawWord(rows+leftStop, true);
+                }            
+                do Screen.drawWord(rows+rightCol, lineRightMask[x2&15]); 
+            }            
+            
+            let rows = rows + 32;
+            let y1 = y1 + 1;
+            
+        }     
+        
+        return;
+    }
+
+    /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
+    function void drawCircle(int xc, int yc, int r) {
+        var int x, y, decision, diff;
+        
+        let x = 0;
+        let y = r;
+        let decision = 3 - (r+r);        
+        do Screen.drawHorizontalLine(xc-r, yc, xc+r);
+
+        while (y > x) {          
+                        
+            if (decision < 0) {
+                let decision = decision + (x+x+x+x) + 6;
+                let x = x + 1;
+            }
+            
+            else {
+                if ((decision > 0) & (y > x)) {
+                    let y = y - 1;
+                    let decision = (decision + 4) - (y+y+y+y);
+                }    
+            }            
+            
+            do Screen.drawCircleLines(xc, yc, x, y);                
+        }
+        
+        return;
+    }
+    
+    /** Accepts a center point as xc and yc, and a point on the circle's edge as x and y.
+     *  Plots eight points within circles octants and draws four horizontal lines connecting them. 
+     *  Used with drawCircle(). Here are the points, grouped as the four lines they draw from top to bottom.
+     *  (xc-x, yc-y), (xc+x, yc-y)
+     *  (xc-y, yc-x), (xc+y, yc-x)
+     *  (xc-y, yc+x), (xc+y, yc+x)
+     *  (xc-x, yc+y), (xc+x, cy+y)
+     *  This repeats code in drawHorizontalLine(), but avoids 2 multiplication calls per 8 lines drawn.     
+     */
+    function void drawCircleLines(int xc, int yc, int x, int y) {
+        var int xLeft, xRight, yTop, yBottom;
+        var int topRow, bottomRow, leftCol, rightCol;
+        var int mask, leftMask, rightMask, stop;
+        
+        var int xMidLeft, xMidRight, yMidTop, yMidBottom;
+        var int topMidRow, bottomMidRow, leftMidCol, rightMidCol;
+        var int midMask, leftMidMask, rightMidMask, midStop;  
+
+        /* 
+         * set variables for top and bottom lines, 
+         * and then for 2 middle lines 
+         */        
+        
+        // set variables for top and bottom lines
+        let xLeft = xc-x;
+        let xRight = xc+x;
+        let yTop = yc-y;
+        let yBottom = yc+y;        
+       
+        let topRow = 32 * yTop;
+        let bottomRow = 32 * yBottom;
+        let leftCol = xLeft / 16;
+        let rightCol = xRight / 16; 
+        
+        let leftMask = lineLeftMask[xLeft & 15];
+        let rightMask = lineRightMask[xRight & 15]; 
+        
+        // set variables for 2 middle lines
+        let xMidLeft = xc-y;
+        let xMidRight = xc+y;
+        let yMidTop = yc-x;
+        let yMidBottom = yc+x;        
+       
+        let topMidRow = 32 * yMidTop;
+        let bottomMidRow = 32 * yMidBottom;
+        let leftMidCol = xMidLeft / 16;
+        let rightMidCol = xMidRight / 16; 
+        
+        let leftMidMask = lineLeftMask[xMidLeft & 15];
+        let rightMidMask = lineRightMask[xMidRight & 15];        
+        
+        /* 
+         * draw top and bottom lines 
+         */
+        
+        // draw top and bottom lines if each is all in one word
+        if (leftCol = rightCol) {
+            let mask = leftMask & rightMask;
+            do Screen.drawWord(topRow+leftCol, mask); 
+            do Screen.drawWord(bottomRow+leftCol, mask);
+        }        
+        
+        // draw top and bottom lines if each is in more than one word
+        else {
+            do Screen.drawWord(topRow+leftCol, leftMask);     
+            do Screen.drawWord(bottomRow+leftCol, leftMask);         
+            
+            let stop = rightCol - 1; 
+            while (leftCol < stop) {
+                let leftCol = leftCol + 1;
+                do Screen.drawWord(topRow+leftCol, true);
+                do Screen.drawWord(bottomRow+leftCol, true);
+            }
+            
+            do Screen.drawWord(topRow+rightCol, rightMask);                
+            do Screen.drawWord(bottomRow+rightCol, rightMask); 
+        }
+        
+        /* 
+         * draw 2 middle lines 
+         */        
+        
+        // draw 2 middle lines if each is all in one word
+        if (leftMidCol = rightMidCol) {
+            let midMask = leftMidMask & rightMidMask;
+            do Screen.drawWord(topMidRow+leftMidCol, midMask); 
+            do Screen.drawWord(bottomMidRow+leftMidCol, midMask);
+        }        
+        
+        // draw 2 middle lines if each is in more than one word
+        else {
+            do Screen.drawWord(topMidRow+leftMidCol, leftMidMask);     
+            do Screen.drawWord(bottomMidRow+leftMidCol, leftMidMask);         
+            
+            let midStop = rightMidCol - 1; 
+            while (leftMidCol < midStop) {
+                let leftMidCol = leftMidCol + 1;
+                do Screen.drawWord(topMidRow+leftMidCol, true);
+                do Screen.drawWord(bottomMidRow+leftMidCol, true);
+            }
+            
+            do Screen.drawWord(topMidRow+rightMidCol, rightMidMask);                
+            do Screen.drawWord(bottomMidRow+rightMidCol, rightMidMask); 
+        }        
+        
+        return;
+    }    
+}
