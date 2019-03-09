@@ -1,6 +1,6 @@
 # From Nand to Tetris  
 
-These are programming assignment submissions for a two-part Coursera course called From Nand to Tetris. The course steps through how to build a simple general-purpose computer, from hardware switching circuits to high-level object-based software design.
+These are assignment submissions for a two-part Coursera course called From Nand to Tetris. The course steps through how to build a simple general-purpose computer, from hardware switching circuits to high-level object-based software design.
 
 The course's objective is to integrate key ideas involving algorithms, computer architecture, operating systems, compilers and software engineering into a unified framework. An accompanying book is called The Elements of Computing Systems: Building a Modern Computer from First Principles. See reference links below. 
 
